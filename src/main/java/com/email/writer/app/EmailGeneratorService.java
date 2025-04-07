@@ -2,6 +2,7 @@ package com.email.writer.app;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -14,14 +15,24 @@ public class EmailGeneratorService {
     private final WebClient webClient;
 
     @Value("${GEMINI_API_KEY}")
-private String geminiApiKey;
+    private String geminiApiKey;
 
-@Value("${GEMINI_API_URL}")
-private String geminiApiUrl;
-
+    @Value("${GEMINI_API_URL}")
+    private String geminiApiUrl;
 
     public EmailGeneratorService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
+    }
+
+    // ✅ Debug environment variable injection
+    @PostConstruct
+    public void debugEnvVars() {
+        System.out.println("🔍 Injected via @Value - GEMINI_API_KEY: " + geminiApiKey);
+        System.out.println("🔍 Injected via @Value - GEMINI_API_URL: " + geminiApiUrl);
+
+        // Check also via System.getenv to cross-verify
+        System.out.println("🧪 System.getenv GEMINI_API_KEY: " + System.getenv("GEMINI_API_KEY"));
+        System.out.println("🧪 System.getenv GEMINI_API_URL: " + System.getenv("GEMINI_API_URL"));
     }
 
     public String generateEmailReply(EmailRequest emailRequest) {
@@ -39,7 +50,7 @@ private String geminiApiUrl;
 
         // Make request and get response
         String response = webClient.post()
-                .uri(geminiApiUrl)  // full URL with key is already in application.properties
+                .uri(geminiApiUrl)  // uses injected variable
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
